@@ -1,4 +1,10 @@
-use sp_core::{blake2_256, Pair as _, sr25519::Pair};
+use sp_core::{
+	blake2_256,
+	crypto::Derive,
+	DeriveJunction,
+	Pair as _,
+	sr25519::{Pair, Public},
+};
 
 fn main() {
 
@@ -50,13 +56,28 @@ fn main() {
 	let pk_polkadot = pair_polkadot.unwrap().public();
 	let pair_kusama = Pair::from_string(&format!("{}//kusama", &mnemonic), None);
 	let pk_kusama = pair_kusama.unwrap().public();
-	println!("Polkadot Public Key: {:?}", pk_polkadot.0);
+	println!("Polkadot Public Key: {:?}", &pk_polkadot.0);
 	println!("Kusama Public Key: {:?}\n", pk_kusama.0);
 
 	/* Soft Derivation */
 
 	// Derive a soft path on the Polkadot key.
-	let pair_polkadot_0 = Pair::from_string(&format!("{}//polkadot/0", &mnemonic), None);
-	let pk_polkadot_0 = pair_polkadot_0.unwrap().public();
-	println!("Polkadot Soft-Derived Public Key: {:?}", pk_polkadot_0.0);
+	let pair_polkadot_zero = Pair::from_string(&format!("{}//polkadot/0", &mnemonic), None);
+	let pubkey_soft_derived_with_secret = pair_polkadot_zero.unwrap().public();
+	println!(
+		"Polkadot Soft-Derived Public Key (from secret): {:?}",
+		&pubkey_soft_derived_with_secret.0
+	);
+
+	// Derive a soft path on the Polkadot key, but only use the _public_ material.
+	let pk_polkadot: Public = Public(pk_polkadot.0);
+	let path = vec![DeriveJunction::soft(0u8)];
+	let pubkey_soft_derived_without_secret = pk_polkadot.derive(path.into_iter());
+	println!(
+		"Polkadot Soft-Derived Public Key (from pubkey): {:?}",
+		&pubkey_soft_derived_without_secret.unwrap().0
+	);
+
+	assert_eq!(pubkey_soft_derived_with_secret, pubkey_soft_derived_without_secret.unwrap());
+	println!("They are equal!");
 }
