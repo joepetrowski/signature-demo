@@ -41,7 +41,7 @@ fn main() {
 	let long_message =
 		b"Welcome to Polkadot Blockchain Academy 2022. We are staying in Cambridge, which I was told is far superior to Oxford, but I should probably leave that to others to hash out.";
 	let message_hash = blake2_256(&long_message[..]);
-	let signature_on_hash = pair.sign(&message_hash);
+	let signature_on_hash = pair.sign(&message_hash[..]);
 	println!("Longer Message: {:?}", std::str::from_utf8(&long_message[..]).unwrap());
 	println!("Long Message Hash: {:?}", message_hash);
 
