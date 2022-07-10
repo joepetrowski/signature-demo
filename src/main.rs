@@ -13,6 +13,12 @@ fn main() {
 	let pk = pair.public();
 	println!("Public Key: {:?}\n", &pk.0);
 
+	// Recreate the secret from the mnemonic.
+	let (same_pair, same_raw_seed) = sr25519::Pair::from_phrase(&mnemonic, None).unwrap();
+	let same_pk = same_pair.public();
+	println!("Same Secret Key: {:?}", &same_raw_seed);
+	println!("Same Public Key: {:?}\n", &same_pk.0);
+
 	/* Signatures */
 
 	// Sign a message.
@@ -32,7 +38,7 @@ fn main() {
 	println!("Signature rejected!\n");
 
 	/* Message Hash */
-	
+
 	let long_message =
 		b"Welcome to Polkadot Blockchain Academy 2022. We are staying in Cambridge, which I was told is far superior to Oxford, but I should probably leave that to others to hash out.";
 	let message_hash = blake2_256(&long_message[..]);
