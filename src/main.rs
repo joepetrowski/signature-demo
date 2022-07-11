@@ -95,7 +95,7 @@ fn hashes() {
 	/* Variable input, fixed output. */
 
 	let short_input_hash = blake2_256(&b"abcd"[..]);
-	let long_input_hash = blake2_256(&[0; 1024][..]);
+	let long_input_hash = blake2_256(&[0u8; 1024][..]);
 	assert_eq!(short_input_hash.len(), long_input_hash.len());
 	println!("{:?}", short_input_hash);
 	println!("{:?}", long_input_hash);
@@ -103,7 +103,7 @@ fn hashes() {
 	/* Computation Speed */
 
 	use std::time::{Instant};
-	let value_to_hash = [0; 1024]; // 1 kb
+	let value_to_hash = [0u8; 1024]; // 1 kb
 
 	let blake2_start = Instant::now();
 	for _ in 0..1000 {
