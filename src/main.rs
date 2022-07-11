@@ -128,6 +128,7 @@ fn hashes() {
 	let mut count = 0u32;
 	let difficulty = 2; // number of bytes to call it a "collision"
 	loop {
+		count += 1;
 		let x: [u8; 16] = random();
 		let x_hash = blake2_256(&x[..]);
 		if sized_compare(&attack_target[0..difficulty], &x_hash[0..difficulty]) {
@@ -138,8 +139,7 @@ fn hashes() {
 		}
 
 		// some protection
-		count += 1;
-		if count == 100_000 {
+		if count == 500_000 {
 			println!("\nGiving up on pre-image attack");
 			break;
 		}
@@ -147,26 +147,36 @@ fn hashes() {
 
 	/* Collisions */
 
+	//                     hash,     value
+	let mut previous: Vec<([u8; 32], [u8; 16])> = Vec::new();
+
 	let mut count = 0u32;
+	let mut break_loop = false;
 	let difficulty = 2; // number of bytes to call it a "collision"
 	loop {
+		count += 1;
+
 		let x: [u8; 16] = random();
 		let x_hash = blake2_256(&x[..]);
 
-		let y: [u8; 16] = random();
-		let y_hash = blake2_256(&y[..]);
-
-		if sized_compare(&x_hash[0..difficulty], &y_hash[0..difficulty]) {
-			println!("\nCollision found in {:?} attempts!", count);
-			println!("x: {:?}", x);
-			println!("y: {:?}", y);
-			sized_print(&x_hash[0..difficulty]);
-			sized_print(&y_hash[0..difficulty]);
+		for hh in &previous {
+			if sized_compare(&x_hash[0..difficulty], &hh.0[0..difficulty]) {
+				println!("\nCollision found in {:?} attempts!", count);
+				println!("pre-image 1: {:?}", &hh.1);
+				println!("pre-image 2: {:?}", x);
+				sized_print(&x_hash[0..difficulty]);
+				sized_print(&hh.0[0..difficulty]);
+				break_loop = true;
+				break;
+			}
+		}
+		if break_loop {
 			break;
 		}
 
+		previous.push((x_hash, x));
+
 		// some protection
-		count += 1;
 		if count == 100_000 {
 			println!("\nGiving up on collision");
 			break;
