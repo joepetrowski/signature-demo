@@ -1,7 +1,13 @@
 use sp_core::*;
+use std::fmt::Debug;
 
 fn main() {
+	signatures();
+	hashes();
+}
 
+fn signatures() {
+	println!("\n\nStarting Signature Demo.\n\n");
 	/* Key generation */
 
 	// Generate a secret key.
@@ -82,4 +88,96 @@ fn main() {
 
 	assert_eq!(pubkey_soft_derived_with_secret, pubkey_soft_derived_without_secret.unwrap());
 	println!("They are equal!");
+}
+
+fn hashes() {
+	println!("\n\nStarting Hash Function Demo.\n\n");
+	/* Variable input, fixed output. */
+
+	let short_input_hash = blake2_256(&b"abcd"[..]);
+	let long_input_hash = blake2_256(&[0; 1024][..]);
+	assert_eq!(short_input_hash.len(), long_input_hash.len());
+	println!("{:?}", short_input_hash);
+	println!("{:?}", long_input_hash);
+
+	/* Computation Speed */
+
+	use std::time::{Instant};
+	let value_to_hash = [0; 1024]; // 1 kb
+
+	let blake2_start = Instant::now();
+	for _ in 0..1000 {
+		let _ = blake2_256(&value_to_hash[..]);
+	}
+	let blake2_elapsed_time = blake2_start.elapsed().as_micros();
+
+	let twox_start = Instant::now();
+	for _ in 0..1000 {
+		let _ = twox_256(&value_to_hash[..]);
+	}
+	let twox_elapsed_time = twox_start.elapsed().as_micros();
+
+	println!("\nTime (us) for 1k rounds of Blake2: {:?}", blake2_elapsed_time);
+	println!("Time (us) for 1k rounds of TwoX:   {:?}", twox_elapsed_time); // expected about 10x faster
+
+	/* Pre-Image Attacks */
+
+	use rand::prelude::*;
+	let attack_target = blake2_256(b"cambridge");
+
+	let mut count = 0u32;
+	let difficulty = 2; // number of bytes to call it a "collision"
+	loop {
+		let x: [u8; 16] = random();
+		let x_hash = blake2_256(&x[..]);
+		if sized_compare(&attack_target[0..difficulty], &x_hash[0..difficulty]) {
+			println!("\nSecond pre-image found in {:?} attempts! {:?}", count, x);
+			sized_print(&x_hash[0..difficulty]);
+			sized_print(&attack_target[0..difficulty]);
+			break;
+		}
+
+		// some protection
+		count += 1;
+		if count == 100_000 {
+			println!("\nGiving up on pre-image attack");
+			break;
+		}
+	}
+
+	/* Collisions */
+
+	let mut count = 0u32;
+	let difficulty = 2; // number of bytes to call it a "collision"
+	loop {
+		let x: [u8; 16] = random();
+		let x_hash = blake2_256(&x[..]);
+
+		let y: [u8; 16] = random();
+		let y_hash = blake2_256(&y[..]);
+
+		if sized_compare(&x_hash[0..difficulty], &y_hash[0..difficulty]) {
+			println!("\nCollision found in {:?} attempts!", count);
+			println!("x: {:?}", x);
+			println!("y: {:?}", y);
+			sized_print(&x_hash[0..difficulty]);
+			sized_print(&y_hash[0..difficulty]);
+			break;
+		}
+
+		// some protection
+		count += 1;
+		if count == 100_000 {
+			println!("\nGiving up on collision");
+			break;
+		}
+	}
+}
+
+fn sized_print<H:Debug+?Sized>(h: &H) {
+    println!("{:?}", h);
+}
+
+fn sized_compare<H:Debug+?Sized+std::cmp::PartialEq>(a: &H, b: &H) -> bool {
+	a == b
 }
