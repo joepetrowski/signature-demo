@@ -178,6 +178,6 @@ fn sized_print<H:Debug+?Sized>(h: &H) {
     println!("{:?}", h);
 }
 
-fn sized_compare<H:Debug+?Sized+std::cmp::PartialEq>(a: &H, b: &H) -> bool {
+fn sized_compare<H:std::cmp::PartialEq+?Sized>(a: &H, b: &H) -> bool {
 	a == b
 }
